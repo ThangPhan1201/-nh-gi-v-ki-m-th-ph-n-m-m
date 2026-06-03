@@ -11,6 +11,7 @@ export interface LoginCredentials {
 export class AutoTestGenerator {
   private loginCredentials?: LoginCredentials;
   private authenticatedPages: DiscoveredPage[] = [];
+  private projectType: 'booking' | 'generic' = 'booking';
 
   setCredentials(credentials: LoginCredentials): void {
     this.loginCredentials = credentials;
@@ -20,17 +21,24 @@ export class AutoTestGenerator {
     this.authenticatedPages = pages;
   }
 
+  setProjectType(type: 'booking' | 'generic'): void {
+    this.projectType = type;
+  }
+
   generateAllTests(
     pages: DiscoveredPage[], 
     credentials?: LoginCredentials,
-    authPages: DiscoveredPage[] = []
+    authPages: DiscoveredPage[] = [],
+    projectType: 'booking' | 'generic' = 'booking'
   ): TestSuite[] {
     const suites: TestSuite[] = [];
 
     this.loginCredentials = credentials;
     this.authenticatedPages = authPages;
+    this.projectType = projectType;
 
     logger.info(`Generating test suites for ${pages.length} pages...`);
+    logger.info(`Project type: ${projectType}${projectType === 'generic' ? ' (basic tests only)' : ' (full feature tests)'}`);
 
     for (const page of pages) {
       suites.push(...this.generateTestsForPage(page));
@@ -431,10 +439,12 @@ export class AutoTestGenerator {
   private generateAuthenticatedTests(credentials: LoginCredentials): TestSuite[] {
     const suites: TestSuite[] = [];
 
-    // Patient tests - INCLUDE APPOINTMENTS
-    suites.push(this.createPatientAppointmentTests());
-    suites.push(this.createPatientProfileTests());
-    suites.push(this.createPatientNotificationTests());
+    // Only add patient-specific tests for 'booking' project type
+    if (this.projectType === 'booking') {
+      suites.push(this.createPatientAppointmentTests());
+      suites.push(this.createPatientProfileTests());
+      suites.push(this.createPatientNotificationTests());
+    }
 
     // Doctor tests - SKIP APPOINTMENTS
     // suites.push(this.createDoctorAppointmentTests());

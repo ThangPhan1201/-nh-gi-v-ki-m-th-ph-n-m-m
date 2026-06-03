@@ -157,6 +157,7 @@ async function autoTestMode(url: string, options: {
   password?: string;
   role?: string;
   noDb?: boolean;
+  projectType?: 'booking' | 'generic';
 }): Promise<void> {
   const isHeadless = options.visible === true ? false : (options.headless !== false);
   const slowMo = isHeadless ? 0 : 800;
@@ -173,6 +174,7 @@ async function autoTestMode(url: string, options: {
   console.log(chalk.gray(`Project Directory : ${projectDir}`));
   console.log(chalk.gray(`Reports Directory : ${reportsDir}`));
   console.log(chalk.cyan(`Browser Mode      : ${isHeadless ? 'HEADLESS (hidden)' : 'VISIBLE (showing browser)'}`));
+  console.log(chalk.cyan(`Project Type      : ${options.projectType || 'booking'} (${options.projectType === 'generic' ? 'basic tests only' : 'full feature tests'})`));
   console.log('');
   logger.info(`Target URL: ${url}`);
   logger.info('Starting website discovery...\n');
@@ -285,7 +287,8 @@ async function autoTestMode(url: string, options: {
   }
 
   logger.info('Generating test cases...\n');
-  const testSuites = autoTestGenerator.generateAllTests(discoveredPages, credentials, loginSuccess ? websiteCrawler.getDiscoveredPages() : []);
+  const projectType = options.projectType || 'booking';
+  const testSuites = autoTestGenerator.generateAllTests(discoveredPages, credentials, loginSuccess ? websiteCrawler.getDiscoveredPages() : [], projectType);
   console.log(chalk.green(`Generated ${testSuites.length} test suites\n`));
 
   logger.info('Starting test execution...\n');
@@ -369,9 +372,16 @@ program
   .option('-p, --password <password>', 'Password for auto-login (fetches from DB if not provided)')
   .option('-r, --role <role>', 'User role to fetch credentials: patient, doctor, admin')
   .option('-d, --no-db', 'Skip database lookup for credentials')
+  .option('-t, --project-type <type>', 'Project type: booking (default) for appointment system, generic for basic tests')
   .action(async (url, options) => {
     try {
-      await autoTestMode(url, options);
+      // Validate project type
+      const projectType = options.projectType as 'booking' | 'generic' | undefined;
+      if (projectType && !['booking', 'generic'].includes(projectType)) {
+        console.error(chalk.red('Error: --project-type must be "booking" or "generic"'));
+        process.exit(1);
+      }
+      await autoTestMode(url, { ...options, projectType: projectType || 'booking' });
     } catch (error: any) {
       logger.error(`Auto test failed: ${error.message}`);
       console.error(error);

@@ -10,7 +10,12 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "test": "ts-node src/index.ts auto https://example.com"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:api": "vitest run src/tests/unit/APITester.test.ts",
+    "test:unit": "vitest run src/tests/unit/"
   },
   "keywords": [
     "cli",
@@ -35,7 +40,16 @@
     "@types/cheerio": "^0.22.35",
     "@types/node": "^20.10.0",
     "@types/pg": "^8.20.0",
+    "@vitest/ui": "^4.1.8",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.8"
+  },
+  "vitest": {
+    "include": [
+      "src/tests/**/*.test.ts"
+    ],
+    "environment": "node",
+    "globals": true
   }
 }
